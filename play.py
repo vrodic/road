@@ -7,9 +7,9 @@ import mathutils
 import pprint
 
 # Get the active mesh
-#obj = bpy.context.edit_object
+obj = bpy.context.edit_object
 # Or by name
-obj = bpy.data.objects["Landscape"]
+#obj = bpy.data.objects["Landscape"]
 me = obj.data
 
 
@@ -48,34 +48,47 @@ print (side)
 
 old = bm.verts[0].co
 dStep = 0.5
-dStep = 0.1
 
-liftedVerts = {}
+path = []
 
+currentIndex = 0
 for i in range(side):
-
-    vert = bm.verts[i*(side+1)].co
-    print ("Current vert")
-    pprint.pprint(vert)
+    #print ("Current vert")
+    #pprint.pprint(vert)
     #bm.verts[i*(side+1)].co.z += dStep;   
-    for (co, index, dist) in kd.find_range(vert, blockDist   ):
-        if (liftedVerts.get(index) != True):
-            liftedVerts[index] = True
-            bm.verts[index].co.z +=dStep
-            print("lifting    ", co, index, dist)
-#    bm.verts[nVerts -1 -i].co.z +=dStep;   
-    old = vert
-    print (i)
+    zDiffMin = 10000
+    foundToEnd = 10000
+    vert = bm.verts[currentIndex].co
+    curToEnd = (end-vert).length
+    oldIndex = currentIndex
+        
+    for (co, index, dist) in kd.find_range(vert, blockDist*5):
+        zDiff = abs(vert.z-co.z)
+        nextToEnd = (end-co).length
+        print ("nextToEnd ", nextToEnd)
+        #print ("index ", index)
+        if (zDiff <= zDiffMin and nextToEnd < curToEnd and currentIndex != index 
+            and nextToEnd < foundToEnd):
+            foundToEnd = nextToEnd
+            zDiffMin = zDiff
+            currentIndex = index
+            print ("currentIndex ", currentIndex)
     
-#bm.verts[0].co.z -=1;
-#bm.verts[16383].co.z -=1;
+    if (oldIndex != currentIndex):
+        path.append(currentIndex)
+    #bm.verts[currentIndex].co.z += dStep;       
+    print (i)
 
-
-#for v in bm.verts:
-#    pprint.pprint(v.co)
-#    v.co.y += 1.0
-
-
-# Show the updates in the viewport
-# and recalculate n-gon tessellation.
+startZ = bm.verts[path[0]].co.z
+startZ = 1
+for i in path:
+    vert = bm.verts[i].co
+    print ("Vertex ", i)
+    for (co, index, dist) in kd.find_range(vert, blockDist*5):
+        print ("Dist ", dist)
+        #bm.verts[index].co.z = bm.verts[index].co.z*0.1+startZ*0.9
+        bm.verts[index].co.z = bm.verts[index].co.z*dist+startZ*(1-dist)
+        #bm.verts[index].co.z = 1
+    startZ = bm.verts[index].co.z
+                  
 bmesh.update_edit_mesh(me, True)
