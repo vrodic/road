@@ -80,14 +80,27 @@ for i in range(side):
     print (i)
 
 startZ = bm.verts[path[0]].co.z
-startZ = 1
+startZ = 0.5
+touchedVertices = {}
 for i in path:
     vert = bm.verts[i].co
     print ("Vertex ", i)
-    for (co, index, dist) in kd.find_range(vert, blockDist*5):
+    distToEndMax = 0
+    distToEndMin = 10000
+    near = kd.find_range(vert, blockDist*5)
+    for (co, index, dist) in near:
+        distToEndMax = max(distToEndMax, abs((end-co).length))
+        distToEndMin = min(distToEndMin, abs((end-co).length))
+            
+    for (co, index, dist) in near:
         print ("Dist ", dist)
-        #bm.verts[index].co.z = bm.verts[index].co.z*0.1+startZ*0.9
-        bm.verts[index].co.z = bm.verts[index].co.z*dist+startZ*(1-dist)
+      #  distEnd = abs((end-co).length)
+     #   distEndNormalized = (distEnd-distToEndMin)/(distToEndMax-distToEndMin)
+#        print ("distEndNormalized ", distEndNormalized)      
+        bm.verts[index].co.z = bm.verts[index].co.z*0.1+startZ*0.9
+        #if (touchedVertices.get(index) != True):
+        #    bm.verts[index].co.z = bm.verts[index].co.z*(1-distEndNormalized)+startZ*(distEndNormalized)
+        #    touchedVertices[index] = True
         #bm.verts[index].co.z = 1
     startZ = bm.verts[index].co.z
                   
